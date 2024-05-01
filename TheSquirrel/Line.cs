@@ -65,7 +65,7 @@ namespace TheSquirrel
                         logWriter.WriteLine("Line: {0} Token: {1}", lineNumber, tokenNumber, true);
                         logWriter.WriteLine("Unexpected input value: {0}", x, true);
                         if (theSquirrel.uOption(options))
-                            logWriter.WriteLine("Is this really an UTF8 file");
+                            logWriter.WriteLine("Is this really an UTF8 file ?");
                         else
                             logWriter.WriteLine("This may be an UTF8 file");
                     }

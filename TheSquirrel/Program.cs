@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Remoting.Messaging;
 using System.Text;
 
 namespace TheSquirrel
@@ -18,7 +17,7 @@ namespace TheSquirrel
             //
             //          option /u       file is in UTF8 format
             //          option /c=n     sorting from column n (n >= 1)
-            //          option /i       do not ignore uppercase
+            //          option /v       do not ignore uppercase
 
             new TheSquirrel().ExtractOptions(args);
         }
@@ -59,64 +58,80 @@ namespace TheSquirrel
 
 
             }
-            else if (nargs > 0)
+            else
             {
+                bool optionsOk = true;
                 int nOptionParams = 0;
-                if (args[0][0] == '/')
+                for (int i = 0; i < nargs; i++)
                 {
-                    for (int i = 0; i < nargs; i++)
+                    if (args[i][0] != '/')
                     {
-                        if (args[i][0] != '/')
-                        {
-                            break;
-                        }
-                        nOptionParams++;
+                        break;
                     }
-                    for (int i = 0; i < nOptionParams; i++)
-                    {
-                        string[] optionSplit = args[i].Split(' ');
-                        AddOptions(options, optionSplit);
-                    }
-                    AddFileNames(options, args, nOptionParams, nargs - nOptionParams);
+                    nOptionParams++;
                 }
+                for (int i = 0; i < nOptionParams; i++)
+                {
+                    string[] optionSplit = args[i].Split('/');
+                    optionsOk = AddOptions(options, optionSplit);
+                }
+                if (!optionsOk)
+                    Console.WriteLine("Unknown option");
                 else
                 {
-                    AddFileNames(options, args, nOptionParams, nargs);
+                    if (!qOption(options))
+                        AddFileNames(options, args, nOptionParams, nargs - nOptionParams);
                 }
             }
         }
-        void AddOptions(List<string> options, string[] optionSplit)
+        bool AddOptions(List<string> options, string[] optionSplit)
         {
             foreach (string option in optionSplit)
             {
-                if (!option.StartsWith("/"))
-                    throw new Exception("Error");
-                else
+                int nc;
+                if (option.Length == 1)
                 {
-                    string opt = option.Substring(1);
-                    int nc = 0;
-                    if (opt.Length == 1)
+                    if (option[0] == 'u' || option[0] == 'v')
                     {
-                        if (opt[0] == 'u' || opt[0] == 'i')
-                        {
-                            if (!OptionInList(options, opt[0]))
-                            {
-                                options.Add(opt);
-                            }
-                        }
-                        else
-                            throw new Exception("Error");
+                        options.Add(option);
                     }
-                    else if (opt.Length >= 3 && opt[0] == 'c' && opt[1] == '=' && int.TryParse(opt.Substring(2), out nc))
+                    else if (option[0] == '?')
                     {
-                        if (!OptionInList(options, opt[0]))
-                        {
-                            options.Add(opt);
-                        }
+                        Console.WriteLine();
+                        Console.WriteLine("Command line syntax");
+                        Console.WriteLine("input        := <options>*[<fileIn>[<fileOut>]]");
+                        Console.WriteLine("options      := (/<char>[=<number>])*");
+                        Console.WriteLine("fileIn       := <string>");
+                        Console.WriteLine("fileOut      := <string>>");
+                        Console.WriteLine();
+                        Console.WriteLine("Options:");
+                        Console.WriteLine("option /?    Help");
+                        Console.WriteLine("option /v    Case sensitive");
+                        Console.WriteLine("option /u    File is in UTF8 format");
+                        Console.WriteLine("option /c=n  Sorting starting from column n (n >= 1)");
+                        Console.WriteLine();
+                        Console.WriteLine("Example:");
+                        Console.WriteLine("TheSquirrel.exe /u /c=10 /v unsorted.txt sorted.txt");
+                        Console.WriteLine("Input file has UTF8 format");
+                        Console.WriteLine("Sorting starts in column 10");
+                        Console.WriteLine("Sorting is casesensitive");
+                        Console.WriteLine("Input file unsorteed.txt");
+                        Console.WriteLine("Output file sorted.txt");
 
                     }
+                    else
+                        return false;
                 }
+                else if (option.Length >= 3 && option[0] == 'c' && option[1] == '=' && int.TryParse(option.Substring(2), out nc))
+                {
+                    options.Add(option);
+
+                }
+                else if (option.Length != 0)
+                    return false;
             }
+
+            return true;
         }
 
 
@@ -211,6 +226,13 @@ namespace TheSquirrel
             StreamWriter writer = null;
             StreamWriter logWriter = null;
 
+            if (fileNameIn == fileNameOut)
+            {
+                Console.WriteLine("Input and output file names identiclal");
+
+                return;
+            }
+
             try
             {
                 if (uOption(options))
@@ -262,6 +284,18 @@ namespace TheSquirrel
                     logWriter.Close();
             }
         }
+        public bool qOption(List<string> options)
+        {
+            foreach (string option in options)
+            {
+                if (option[0] == '?')
+                {
+                    return true;
+                }
+
+            }
+            return false;
+        }
         public bool uOption(List<string> options)
         {
             foreach (string option in options)
@@ -274,11 +308,11 @@ namespace TheSquirrel
             }
             return false;
         }
-        public bool iOption(List<string> options)
+        public bool vOption(List<string> options)
         {
             foreach (string option in options)
             {
-                if (option[0] == 'i')
+                if (option[0] == 'v')
                 {
                     return true;
                 }

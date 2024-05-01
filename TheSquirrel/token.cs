@@ -144,7 +144,7 @@ namespace TheSquirrel
                 x = 0;
             int y = convert[x, 1];
 
-            if (!theSquirrel.iOption(options))
+            if (!theSquirrel.vOption(options))
                 if (y >= 105 && y <= 133)
                     y += 29;
 
